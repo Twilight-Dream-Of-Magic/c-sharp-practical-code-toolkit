@@ -5,7 +5,7 @@
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <PropertyGroup>
-	<LangVersion>latest</LangVersion>
+    <LangVersion>latest</LangVersion>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{3F693878-4E67-49A9-9092-1CD7EBF0DD75}</ProjectGuid>
@@ -71,7 +71,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
-	<Compile Include=".\[SourceCode]\Security\HashHelper.cs" />
+    <Compile Include=".\[SourceCode]\Security\HashHelper.cs" />
     <Compile Include=".\[SourceCode]\Singleton.cs" />
     <Compile Include=".\[SourceCode]\EventSystem\Framework\Core\EventListener.cs" />
     <Compile Include=".\[SourceCode]\EventSystem\Framework\Core\MyEventArgs.cs" />
@@ -79,13 +79,14 @@
     <Compile Include=".\[SourceCode]\EventSystem\Framework\EventSystemTool.cs" />
     <Compile Include=".\[SourceCode]\ObjectPool\Framework\Caching\CachePoolModule.cs" />
     <Compile Include=".\[SourceCode]\ObjectPool\Framework\ObjectPoolModule.cs" />
-	<Compile Include=".\[SourceCode]\ObjectPool\Framework2\MultiTypePool.cs" />
+    <Compile Include=".\[SourceCode]\ObjectPool\Framework2\MultiTypePool.cs" />
     <Compile Include=".\[SourceCode]\ObjectPool\Framework2\SignalTypePool.cs" />
     <Compile Include=".\[SourceCode]\Conversion\DataFormat\HexHelper.cs" />
     <Compile Include=".\[SourceCode]\Conversion\DataFormat\HexUnsafeHelper.cs" />
     <Compile Include=".\[SourceCode]\Conversion\DataFormat\ObjectExchangeBinary.cs" />
-	<Compile Include=".\[SourceCode]\Extensions\Function\MakeoverObject.cs" />
-	<Compile Include=".\[SourceCode]\Extensions\MyExtensions.cs" />
+    <Compile Include=".\[SourceCode]\Extensions\Function\MakeoverObject.cs" />
+    <Compile Include=".\[SourceCode]\Extensions\MyExtensions.cs" />
+    <Compile Include="[SourceCode]\EventSystem\Framework\EventWaitableDispatcher.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
