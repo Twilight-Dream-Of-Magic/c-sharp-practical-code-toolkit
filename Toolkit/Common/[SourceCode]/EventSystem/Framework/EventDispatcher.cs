@@ -1,17 +1,14 @@
-﻿// You are currently viewing the code for the Event System module
+﻿// You are currently viewing the code for the Object Pooling module
 // Project Name: C# Practical code toolkit by Twilight-Dream
-// Copyright 2021@Twilight-Dream. All rights reserved.
-// Gmail: yujiang1187791459@gmail.com
+// Copyright 2050@Twilight-Dream. All rights reserved.
 // Github: https://github.com/Twilight-Dream-Of-Magic
 // Git Repository: https://github.com/Twilight-Dream-Of-Magic/c-sharp-practical-code-toolkit
-// China Tencent QQ Mail: 1187791459@qq.com
 // China Bilibili Video Space: https://space.bilibili.com/21974189
 // China Bilibili Live Space: https://live.bilibili.com/1210760
 
-using System;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using Twilight_Dream.EventSystem.Framework.Core;
 
 namespace Twilight_Dream.EventSystem.Framework
@@ -23,13 +20,12 @@ namespace Twilight_Dream.EventSystem.Framework
 		/// </summary>
 		public Dictionary<string, EventListener> EventMap = new Dictionary<string, EventListener>();
 
-		private EventWaitHandle @EventWaitHandle = new ManualResetEvent(false);
-		private EventWaitHandle @EventWaitHandle2 = new ManualResetEvent(false);
+		private EventWaitHandle Async_EventWaitHandle = new ManualResetEvent(false);
 
 		public Dictionary<string, EventListener> Async_EventMap = new Dictionary<string, EventListener>();
 		private HashSet<string> Async_EventHashset = new HashSet<string>();
-		private Queue<MyEventArgs> Async_MyEventArgs_Queque = new Queue<MyEventArgs>();
-		private Queue<EventListener.EventHandler> Async_EventHandler_Queue = new Queue<EventListener.EventHandler>();
+		private ConcurrentQueue<MyEventArgs> Async_MyEventArgs_Queque = new ConcurrentQueue<MyEventArgs>();
+		private ConcurrentQueue<EventListener.EventHandler> Async_EventHandler_Queue = new ConcurrentQueue<EventListener.EventHandler>();
 
 		/// <summary>
 		/// Add Event Listener from other class
@@ -114,6 +110,7 @@ namespace Twilight_Dream.EventSystem.Framework
 		/// </summary>
 		/// <param name="eventName">This event name</param>
 		/// <param name="eventArgs">The event has the parameter data</param>
+		/// <returns>int StatusCode: 1, 0</returns>
 		public int DispatchOneNeedStartWaitingEvent(string eventName, params object[] eventArgs)
 		{
 			int StatusCode = 0;
@@ -137,13 +134,12 @@ namespace Twilight_Dream.EventSystem.Framework
 
 				EventMap.Add(eventName, invoker);
 				Async_MyEventArgs_Queque.Enqueue(EA_object);
-				@EventWaitHandle.WaitOne();
+				Async_EventWaitHandle.WaitOne();
 				return StatusCode;
 			}
 			else
 			{
 				StatusCode = 1;
-				if(StatusCode == 1) throw new Exception("EventDispatcher > DispatchOneNeedStartWaitingEvent() | The eventName string must not be equal to a null reference or the eventName already exists!");
 				return StatusCode;
 			}
 		}
@@ -155,18 +151,21 @@ namespace Twilight_Dream.EventSystem.Framework
 		/// <param name="eventName">This event name</param>
 		/// <param name="eventHandler">This event processor</param>
 		/// <param name="isSingleUseMode">Do the methods of the event delegate need to be removed as soon as they are called?</param>
-		public bool PleaseToDispatchEventAndStopWait(string eventName, EventListener.EventHandler eventHandler, bool isSingleUseMode = true)
+		/// <returns>int StatusCode: 3, 2, 1, 0</returns>
+		public int PleaseToDispatchEventAndStopWait(string eventName, EventListener.EventHandler eventHandler, bool isSingleUseMode = true)
 		{
-			const bool StatusFlag = false;
-
 			EventListener invoker = null;
 			MyEventArgs EA_object = null;
 
 			bool isExistEventName = Async_EventMap.TryGetValue(eventName, out invoker);
-			EA_object = Async_MyEventArgs_Queque.Dequeue();
+
+			if (Async_MyEventArgs_Queque.Count > 0)
+			{
+				Async_MyEventArgs_Queque.TryDequeue(out EA_object);
+			}
 			Async_MyEventArgs_Queque.Enqueue(EA_object);
 
-			@EventWaitHandle.Set();
+			Async_EventWaitHandle.Set();
 
 			if (isExistEventName == true && Async_EventHashset.Contains(eventName))
 			{
@@ -178,23 +177,23 @@ namespace Twilight_Dream.EventSystem.Framework
 						{
 							eventName = EA_object._eventName;
 
-							if (!HasListenerByAsync(eventName) && StatusFlag == false)
+							if (!HasListenerByAsync(eventName))
 							{
-								throw new Exception("EventDispatcher > PleaseToDispatchEventAndStopWait() The MyEventArgs._eventName string the eventName never is not exists!");
+								return 3;
 							}
 						}
 					}
-					else if(EA_object._eventName == null && StatusFlag == false)
+					else if(EA_object._eventName == null)
 					{
-						throw new Exception("EventDispatcher > PleaseToDispatchEventAndStopWait() The MyEventArgs._eventName string must not be equal to a null reference!");
+						return 2;
 					}
 					
 					invoker.Invoke(EA_object);
-					return StatusFlag != true;
+					return 0;
 				}
 				else
 				{
-					throw new Exception("EventDispatcher > PleaseToDispatchEventAndStopWait() The MyEventArgs object must not be equal to a null reference!");
+					return 1;
 				}
 			}
 
@@ -219,7 +218,7 @@ namespace Twilight_Dream.EventSystem.Framework
 			{
 				invoker.eventHandler -= eventHandler;
 			}
-			return StatusFlag != true;
+			return 0;
 		}
 
 		/// <summary>
@@ -230,6 +229,20 @@ namespace Twilight_Dream.EventSystem.Framework
 		public bool HasListenerByAsync(string eventName)
 		{
 			return Async_EventMap.ContainsKey(eventName);
+		}
+
+		/// <summary>
+		/// Remove all MyEventArgs in the concurrent queue
+		/// </summary>
+		public void RemoveAllMyEventArgsAsync()
+		{
+			MyEventArgs EA_object = null;
+
+			while (Async_MyEventArgs_Queque.Count > 0)
+			{
+				Async_MyEventArgs_Queque.TryDequeue(out EA_object);
+				EA_object = null;
+			}
 		}
 
 		/// <summary>
